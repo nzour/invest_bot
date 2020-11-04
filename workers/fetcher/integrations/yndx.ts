@@ -1,4 +1,3 @@
-import { FetcherIntegrationImplementation } from "../../../common/types";
 import { assertDirectoryExists } from "../../core/functions";
 import axios from 'axios';
 import * as fs from "fs/promises";
@@ -7,6 +6,7 @@ import { v4 as uuid } from 'uuid';
 import { JSDOM as Jsdom } from 'jsdom';
 import { Logger } from "winston";
 import { DocumentsStorage } from "../../../common/documents-storage";
+import { FetcherImplementation } from "../../../bin/fetcher";
 
 type PlainDocument = { title: string, url: string };
 
@@ -70,7 +70,7 @@ type Options = {
 	logger: Logger
 }
 
-export function createIntegration({ storage, directoryToSave, mainUrl, logger }: Options): FetcherIntegrationImplementation {
+export function createIntegration({ storage, directoryToSave, mainUrl, logger }: Options): FetcherImplementation {
 	return async () => {
 		try {
 			await assertDirectoryExists(directoryToSave);

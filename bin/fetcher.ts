@@ -1,18 +1,19 @@
 #!/usr/bin/env ts-node-script
 
-import { Company, companyUrls } from "../core/company";
-import * as yandex from "./integrations/yndx";
+import { Company, companyUrls } from "../workers/core/company";
+import * as yandex from "../workers/fetcher/integrations/yndx";
 import { interval } from "rxjs";
 import { filter } from "rxjs/operators";
-import { FetcherIntegrationImplementation } from "../../common/types";
-import { createLogger } from "../core/functions";
-import { DocumentsStorageFileSystem } from "../../common/documents-storage";
+import { createLogger, useWithLockFunction } from "../workers/core/functions";
+import { DocumentsStorageFileSystem } from "../common/documents-storage";
 
-const tempDir = (subDir: Company) =>  `/tmp/invest_bot/${subDir}`;
-const logDir = (subDir: Company | string) =>  `/var/log/invest_bot/${subDir}`;
+export type FetcherImplementation = () => Promise<void>;
+
+const tempDir = (subDir: Company) => `/tmp/invest_bot/${subDir}/fetcher`;
+const logDir = (subDir: Company | string) => `/var/log/invest_bot/${subDir}/fetcher`;
 
 const mainLogger = createLogger(logDir('main'));
-const integrationsMap = new Map<Company, FetcherIntegrationImplementation>();
+const integrationsMap = new Map<Company, FetcherImplementation>();
 
 const storage = new DocumentsStorageFileSystem('/tmp/invest_bot/documents');
 
@@ -23,17 +24,7 @@ integrationsMap.set('Yndx', yandex.createIntegration({
   storage
 }));
 
-let isLocked = false;
-
-async function withLock(callable: () => Promise<void>): Promise<void> {
-  isLocked = true;
-
-  try {
-    await callable();
-  } finally {
-    isLocked = false;
-  }
-}
+const { isLocked, withLock } = useWithLockFunction();
 
 async function runAllIntegrations(): Promise<void> {
   mainLogger.info('Running all integrations');
@@ -57,7 +48,7 @@ async function runAllIntegrations(): Promise<void> {
 
 interval(10000) // every 10 seconds
   .pipe(
-    filter(() => !isLocked),
+    filter(() => !isLocked()),
   )
   .subscribe(async () => await withLock(runAllIntegrations));
 

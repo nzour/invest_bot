@@ -33,3 +33,34 @@ export function createLogger(directory: string): Logger {
     transports: [...transports, new t.Console()]
   })
 }
+
+export function createConsoleLogger(level = 'debug'): Logger {
+  return createWinstonLogger({
+    level,
+    format: format.printf(({ level, message }) => `[${level}: ${new Date().toISOString()}] ${message}`),
+    transports: [new t.Console()]
+  })
+}
+
+
+export function useWithLockFunction(): {
+  isLocked: () => boolean,
+  withLock: (callable: () => Promise<void>) => Promise<void>
+} {
+  let lock = false;
+
+  const isLocked = () => lock;
+
+  const withLock = async (callable) => {
+    lock = true;
+
+    try {
+      await callable();
+    } finally {
+      lock = false;
+    }
+  };
+
+  return { isLocked, withLock };
+}
+
