@@ -3,40 +3,57 @@
 import { Company, companyUrls } from "../core/company";
 import * as yandex from "./integrations/yndx";
 import { interval } from "rxjs";
-import { filter, tap } from "rxjs/operators";
+import { filter } from "rxjs/operators";
+import { FetcherIntegrationImplementation } from "../core/types";
+import { createLogger } from "../core/functions";
 
-const integrationsMap = new Map<Company, (company: string, url: string) => Promise<void>>();
+const tempDir = (subDir: Company) =>  `/tmp/invest_bot/${subDir}`;
+const logDir = (subDir: Company | string) =>  `/var/log/invest_bot/${subDir}`;
 
-integrationsMap.set('Yndx', yandex.execute);
+const mainLogger = createLogger(logDir('main'));
+const integrationsMap = new Map<Company, FetcherIntegrationImplementation>();
+
+integrationsMap.set('Yndx', yandex.createIntegration({
+  mainUrl: companyUrls.Yndx,
+  directoryToSave: tempDir('Yndx'),
+  logger: createLogger(logDir('Yndx'))
+}));
 
 let isLocked = false;
 
 async function withLock(callable: () => Promise<void>): Promise<void> {
-	isLocked = true;
+  isLocked = true;
 
-	try {
-		await callable();
-	} finally {
-		isLocked = false;
-	}
+  try {
+    await callable();
+  } finally {
+    isLocked = false;
+  }
 }
 
 async function runAllIntegrations(): Promise<void> {
-	for (const [company, integration] of integrationsMap.entries()) {
-		try {
-			const url = companyUrls[company];
+  mainLogger.info('Running all integrations');
 
-			await integration(company, url);
-		} catch (e) {
-			console.log(e);
-			// TODO: LOG HERE
-		}
-	}
+  let startedAt: number | undefined;
+
+  for (const [name, integration] of integrationsMap.entries()) {
+    try {
+      mainLogger.info(`Started integration ${name}`);
+      startedAt = Date.now();
+
+      await integration();
+    } catch (e) {
+      // only unhandled exception may occur here
+      mainLogger.error(String(e));
+    } finally {
+      mainLogger.info(`Done integration ${name}, (${(Date.now() - startedAt) / 1000})`);
+    }
+  }
 }
 
 interval(10000) // every 10 seconds
-	.pipe(
-		filter(() => !isLocked),
-	)
-	.subscribe(async () => await withLock(runAllIntegrations));
+  .pipe(
+    filter(() => !isLocked),
+  )
+  .subscribe(async () => await withLock(runAllIntegrations));
 

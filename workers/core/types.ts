@@ -4,3 +4,5 @@ export type PartialResult<TSuccess, TError> = {
 };
 
 export type Uuid = string;
+
+export type FetcherIntegrationImplementation = () => Promise<void>;
