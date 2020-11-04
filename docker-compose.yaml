@@ -1,0 +1,17 @@
+version: '3.0'
+
+services:
+  postgres:
+    container_name: invest_bot_postgres
+    image: postgres:13
+    environment:
+      POSTGRES_DB: invest_bot
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+    ports:
+      - 5432:5432
+    volumes:
+      - invest_bot_postgres_volume:/var/lib/postgresql/data
+
+volumes:
+  invest_bot_postgres_volume:
