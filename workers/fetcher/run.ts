@@ -4,8 +4,9 @@ import { Company, companyUrls } from "../core/company";
 import * as yandex from "./integrations/yndx";
 import { interval } from "rxjs";
 import { filter } from "rxjs/operators";
-import { FetcherIntegrationImplementation } from "../core/types";
+import { FetcherIntegrationImplementation } from "../../common/types";
 import { createLogger } from "../core/functions";
+import { DocumentsStorageFileSystem } from "../../common/documents-storage";
 
 const tempDir = (subDir: Company) =>  `/tmp/invest_bot/${subDir}`;
 const logDir = (subDir: Company | string) =>  `/var/log/invest_bot/${subDir}`;
@@ -13,10 +14,13 @@ const logDir = (subDir: Company | string) =>  `/var/log/invest_bot/${subDir}`;
 const mainLogger = createLogger(logDir('main'));
 const integrationsMap = new Map<Company, FetcherIntegrationImplementation>();
 
+const storage = new DocumentsStorageFileSystem('/tmp/invest_bot/documents');
+
 integrationsMap.set('Yndx', yandex.createIntegration({
   mainUrl: companyUrls.Yndx,
   directoryToSave: tempDir('Yndx'),
-  logger: createLogger(logDir('Yndx'))
+  logger: createLogger(logDir('Yndx')),
+  storage
 }));
 
 let isLocked = false;

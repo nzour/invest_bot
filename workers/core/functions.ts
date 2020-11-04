@@ -11,6 +11,15 @@ export async function assertDirectoryExists(path: PathLike): Promise<void> {
   }
 }
 
+export async function assertFileExists(path: PathLike): Promise<void> {
+  try {
+    await fs.access(path)
+    await fs.chmod(path, 0o777);
+  } catch (e) {
+    await fs.appendFile(path, '', { mode: 0o777 });
+  }
+}
+
 export function createLogger(directory: string): Logger {
   const transports = ['debug', 'info', 'warning', 'error']
     .map(level => new t.File({

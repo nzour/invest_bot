@@ -1,4 +1,4 @@
-import { FetcherIntegrationImplementation, Uuid } from "../../core/types";
+import { FetcherIntegrationImplementation } from "../../../common/types";
 import { assertDirectoryExists } from "../../core/functions";
 import axios from 'axios';
 import * as fs from "fs/promises";
@@ -6,8 +6,8 @@ import { PathLike } from "fs";
 import { v4 as uuid } from 'uuid';
 import { JSDOM as Jsdom } from 'jsdom';
 import { Logger } from "winston";
+import { DocumentsStorage } from "../../../common/documents-storage";
 
-type Document = { id: Uuid, title: string };
 type PlainDocument = { title: string, url: string };
 
 async function getAllDocuments(url: string, logger: Logger): Promise<PlainDocument[]> {
@@ -63,23 +63,14 @@ async function downloadAndSaveFile(
 	logger.info(`Done saving ${filepath}, with length: ${content.text.length}`);
 }
 
-async function filterOnlyNotExisted(documents: PlainDocument[]): Promise<PlainDocument[]> {
-	// TODO
-	return documents;
-}
-
-async function saveDocumentToDatabase(document: Document): Promise<void> {
-	// TODO
-}
-
-
 type Options = {
+	storage: DocumentsStorage,
 	directoryToSave: PathLike,
 	mainUrl: string
 	logger: Logger
 }
 
-export function createIntegration({ directoryToSave, mainUrl, logger }: Options): FetcherIntegrationImplementation {
+export function createIntegration({ storage, directoryToSave, mainUrl, logger }: Options): FetcherIntegrationImplementation {
 	return async () => {
 		try {
 			await assertDirectoryExists(directoryToSave);
@@ -87,19 +78,20 @@ export function createIntegration({ directoryToSave, mainUrl, logger }: Options)
 
 			const documents = await getAllDocuments(mainUrl, logger);
 
-			// check if already added in database
-			const documentsToProcess = await filterOnlyNotExisted(documents);
+			const titleOfDocumentsToProcess = await storage.findNonExistentDocuments(documents.map(d => d.title));
 
-			logger.info(`Processing ${documentsToProcess.length} files`);
-			logger.debug(`Processing ${documentsToProcess.length} files, [${documentsToProcess.map(d => d.title).join(', ')}]`);
+			logger.info(`Processing ${titleOfDocumentsToProcess.length} files`);
+			titleOfDocumentsToProcess.length && logger.debug(`Processing ${titleOfDocumentsToProcess.length} files, [${titleOfDocumentsToProcess.join(', ')}]`);
 
-			for (const { url, title } of documentsToProcess) {
+			for (const title of titleOfDocumentsToProcess) {
+				const url = documents.find(d => d.title === title).url;
+
 				// todo: transactional
 				const id = uuid();
 				const document = { id, title };
 
 				await downloadAndSaveFile(`${directoryToSave}/${id}.txt`, url, logger);
-				await saveDocumentToDatabase(document);
+				await storage.save(document);
 
 				logger.debug(`Done ${document.title} (${document.id})`)
 			}
