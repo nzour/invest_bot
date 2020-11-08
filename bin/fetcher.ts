@@ -6,6 +6,8 @@ import { interval } from "rxjs";
 import { filter } from "rxjs/operators";
 import { createLogger, useWithLockFunction } from "../workers/core/functions";
 import { DocumentsStorageFileSystem } from "../common/documents-storage";
+import { Fetcher } from "../common/types";
+import { YandexFetcher } from "../workers/fetcher/integrations/yndx";
 
 export type FetcherImplementation = () => Promise<void>;
 
@@ -13,38 +15,27 @@ const tempDir = (subDir: Company) => `/tmp/invest_bot/${subDir}/fetcher`;
 const logDir = (subDir: Company | string) => `/var/log/invest_bot/${subDir}/fetcher`;
 
 const mainLogger = createLogger(logDir('main'));
-const integrationsMap = new Map<Company, FetcherImplementation>();
+const fetchers = new Map<Company, Fetcher>();
 
 const storage = new DocumentsStorageFileSystem('/tmp/invest_bot/documents');
 
-integrationsMap.set('Yndx', yandex.createIntegration({
-  mainUrl: companyUrls.Yndx,
-  directoryToSave: tempDir('Yndx'),
-  logger: createLogger(logDir('Yndx')),
-  storage
-}));
-
-const { isLocked, withLock } = useWithLockFunction();
+fetchers.set('Yndx', new YandexFetcher(createLogger(logDir('Yndx'))));
 
 async function runAllIntegrations(): Promise<void> {
-  mainLogger.info('Running all integrations');
-
-  let startedAt: number | undefined;
-
-  for (const [name, integration] of integrationsMap.entries()) {
+  for (const [company, fetcher] of fetchers.entries()) {
     try {
-      mainLogger.info(`Started integration ${name}`);
-      startedAt = Date.now();
+      const url = companyUrls[company];
 
-      await integration();
+      const documents = await fetcher.fetchAllDocuments(url);
+
     } catch (e) {
       // only unhandled exception may occur here
       mainLogger.error(String(e));
-    } finally {
-      mainLogger.info(`Done integration ${name}, (${(Date.now() - startedAt) / 1000})`);
     }
   }
 }
+
+const { isLocked, withLock } = useWithLockFunction();
 
 interval(10000) // every 10 seconds
   .pipe(

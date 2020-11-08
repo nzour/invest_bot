@@ -1,14 +1,16 @@
 import * as fs from 'fs/promises';
 import { createInterface } from 'readline';
-import { PathLike, createReadStream } from "fs";
+import { createReadStream, PathLike } from "fs";
 import { assertDirectoryExists, assertFileExists } from "../workers/core/functions";
-import { DocumentFile } from "./types";
+import { DocumentFile, DocumentFileWithExternalLink, Uuid } from "./types";
 
+/** @deprecated */
 export interface DocumentsStorage {
   findNonExistentDocuments(titles: string[]): Promise<string[]>;
   save(document: DocumentFile): Promise<void>;
 }
 
+/** @deprecated */
 export class DocumentsStorageFileSystem implements DocumentsStorage {
   private readonly filename = `${this.directoryToStore}/documents.txt`;
 
@@ -45,3 +47,25 @@ export class DocumentsStorageFileSystem implements DocumentsStorage {
   }
 }
 
+
+export interface DocumentRepository {
+  filterNonExistentDocuments<T extends DocumentFileWithExternalLink>(documents: T[]): Promise<T[]>;
+  saveDocument(document: DocumentFile): Promise<void>;
+  deleteDocument<T extends { id: Uuid }>(document: T): Promise<void>;
+}
+
+export class InMemoryDocumentRepository implements DocumentRepository {
+  private documents = new Array<DocumentFile>();
+
+  async filterNonExistentDocuments<T extends DocumentFileWithExternalLink>(documents: T[]): Promise<T[]> {
+    return documents.filter(d => !this.documents.find(d2 => d2.title === d.title));
+  }
+
+  async saveDocument(document: DocumentFile): Promise<void> {
+    this.documents.push(document);
+  }
+
+  async deleteDocument<T extends { id: Uuid }>({ id }: T): Promise<void> {
+    this.documents = this.documents.filter(d => d.id !== id);
+  }
+}
