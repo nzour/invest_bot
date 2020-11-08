@@ -7,10 +7,12 @@ import { JSDOM as Jsdom } from 'jsdom';
 import { Logger } from "winston";
 import { DocumentsStorage } from "../../../common/documents-storage";
 import { FetcherImplementation } from "../../../bin/fetcher";
+import { DocumentFileWithExternalLink, Fetcher } from "../../../common/types";
+import { pipe } from "fp-ts/function";
 
 type PlainDocument = { title: string, url: string };
 
-async function getAllDocuments(url: string, logger: Logger): Promise<PlainDocument[]> {
+async function fetchAllDocuments(url: string, logger: Logger): Promise<PlainDocument[]> {
 	logger.info('Started parsing');
 
 	const result: PlainDocument[] = [];
@@ -76,7 +78,7 @@ export function createIntegration({ storage, directoryToSave, mainUrl, logger }:
 			await assertDirectoryExists(directoryToSave);
 			logger.debug(`Directory '${directoryToSave}' exists`);
 
-			const documents = await getAllDocuments(mainUrl, logger);
+			const documents = await fetchAllDocuments(mainUrl, logger);
 
 			const titleOfDocumentsToProcess = await storage.findNonExistentDocuments(documents.map(d => d.title));
 
@@ -101,3 +103,24 @@ export function createIntegration({ storage, directoryToSave, mainUrl, logger }:
 	};
 }
 
+export class YandexFetcher implements Fetcher {
+	constructor(private logger: Logger) {}
+
+	async fetchAllDocuments(url: string): Promise<DocumentFileWithExternalLink[]> {
+		const { data, status } = await axios.get(url);
+
+		this.logger.debug(`Got ${status} from ${url} and data length: ${data.length}`);
+
+		const { window: { document } } = new Jsdom(data);
+		const wrappers = document.querySelectorAll('div .nir-widget--news--addl-formats')
+
+		this.logger.debug(`Parsed ${wrappers.length} wrappers by 'div .nir-widget--news--addl-formats'`);
+
+		return [...wrappers.values()]
+			.map(x => ({
+				title: x.children[0].textContent?.trim(),
+				url: x.querySelector('a')?.href?.trim()
+			}))
+			.filter(x => !!x.title && !!x.url);
+	}
+}
