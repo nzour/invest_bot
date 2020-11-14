@@ -5,18 +5,18 @@ import { createLogger as createWinstonLogger, format, Logger, transports as t } 
 export async function assertDirectoryExists(path: PathLike): Promise<void> {
   try {
     await fs.access(path)
-    await fs.chmod(path, 0o777);
+    await fs.chmod(path, 0o755);
   } catch (e) {
-    await fs.mkdir(path, { mode: 0o777, recursive: true });
+    await fs.mkdir(path, { mode: 0o755, recursive: true });
   }
 }
 
 export async function assertFileExists(path: PathLike): Promise<void> {
   try {
     await fs.access(path)
-    await fs.chmod(path, 0o777);
+    await fs.chmod(path, 0o755);
   } catch (e) {
-    await fs.appendFile(path, '', { mode: 0o777 });
+    await fs.appendFile(path, '', { mode: 0o755 });
   }
 }
 

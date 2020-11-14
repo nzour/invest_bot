@@ -59,7 +59,7 @@ async function downloadAndSaveFile(
 	const pdf = require('pdf-parse');
 	const content = await pdf(buffer)
 
-	await fs.appendFile(filepath, content.text, { mode: 0o777 });
+	await fs.appendFile(filepath, content.text, { mode: 0o755 });
 
 	logger.info(`Done saving ${filepath}, with length: ${content.text.length}`);
 }
