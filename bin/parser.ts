@@ -1,9 +1,9 @@
 #!/usr/bin/env ts-node-script
 
-import { Company } from "../workers/core/company";
-import { createLogger } from "../workers/core/functions";
-import * as yandex from '../workers/parser/implementations/yndx';
-import { FileSystemLocker, withLock } from "../workers/core/locker";
+import { Company } from "../modules/core/company";
+import { createLogger } from "../modules/core/functions";
+import * as yandex from '../modules/parsers/yndx';
+import { FileSystemLocker, withLock } from "../modules/core/locker";
 
 export type ParserImplementation = () => Promise<string>;
 

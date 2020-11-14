@@ -1,10 +1,10 @@
 #!/usr/bin/env ts-node-script
 
-import { Company, companyUrls } from "../workers/core/company";
-import { createLogger } from "../workers/core/functions";
-import { Fetcher } from "../common/types";
-import { YandexFetcher } from "../workers/fetcher/integrations/yndx";
-import { FileSystemLocker, withLock } from "../workers/core/locker";
+import { Company, companyUrls } from "../modules/core/company";
+import { createLogger } from "../modules/core/functions";
+import { Fetcher } from "../modules/core/types";
+import { YandexFetcher } from "../modules/fetchers/yndx";
+import { FileSystemLocker, withLock } from "../modules/core/locker";
 
 const logDir = (subDir: Company | string) => `/var/log/invest_bot/${subDir}/fetcher`;
 
@@ -14,7 +14,7 @@ const fetchers = new Map<Company, Fetcher>();
 fetchers.set('Yndx', new YandexFetcher(createLogger(logDir('Yndx'))));
 
 
-withLock(new FileSystemLocker('fetcher', '/tmp/invest_bot'), async () => {
+withLock(new FileSystemLocker('fetchers', '/tmp/invest_bot'), async () => {
   for (const [company, fetcher] of fetchers.entries()) {
     try {
       const url = companyUrls[company];
