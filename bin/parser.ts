@@ -4,6 +4,9 @@ import { Company } from "../modules/core/company";
 import { createLogger } from "../modules/core/functions";
 import * as yandex from '../modules/parsers/yndx';
 import { FileSystemLocker, withLock } from "../modules/core/locker";
+import { config as setupDotenv } from 'dotenv';
+
+setupDotenv();
 
 export type ParserImplementation = () => Promise<string>;
 

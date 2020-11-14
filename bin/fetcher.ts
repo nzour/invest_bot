@@ -5,6 +5,9 @@ import { createLogger } from "../modules/core/functions";
 import { Fetcher } from "../modules/core/types";
 import { YandexFetcher } from "../modules/fetchers/yndx";
 import { FileSystemLocker, withLock } from "../modules/core/locker";
+import { config as setupDotenv } from 'dotenv';
+
+setupDotenv();
 
 const logDir = (subDir: Company | string) => `/var/log/invest_bot/${subDir}/fetcher`;
 
