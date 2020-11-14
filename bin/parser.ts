@@ -1,10 +1,9 @@
 #!/usr/bin/env ts-node-script
 
 import { Company } from "../workers/core/company";
-import { createLogger, useWithLockFunction } from "../workers/core/functions";
+import { createLogger } from "../workers/core/functions";
 import * as yandex from '../workers/parser/implementations/yndx';
-import { interval } from "rxjs";
-import { filter } from "rxjs/operators";
+import { FileSystemLocker, withLock } from "../workers/core/locker";
 
 export type ParserImplementation = () => Promise<string>;
 
@@ -19,32 +18,17 @@ implementationsMap.set('Yndx', yandex.createImplementation({
   documentsDirectory: '/tmp'
 }));
 
-const { isLocked, withLock } = useWithLockFunction();
-
-async function runAllImplementations(): Promise<void> {
-  mainLogger.info('Running all implementations');
-
-  let startedAt: number | undefined;
-
+withLock(new FileSystemLocker('parser', '/tmp/invest_bot'), async () => {
   for (const [name, implantation] of implementationsMap.entries()) {
     try {
       mainLogger.info(`Started implementation ${name}`);
-      startedAt = Date.now();
 
       await implantation();
     } catch (e) {
       // only unhandled exception may occur here
       mainLogger.error(String(e));
-    } finally {
-      mainLogger.info(`Done implementation ${name}, (${(Date.now() - startedAt) / 1000})`);
     }
   }
-}
-
-interval(10000)
-  .pipe(
-    filter(() => !isLocked())
-  )
-  .subscribe(async () => await withLock(runAllImplementations));
+});
 
 
