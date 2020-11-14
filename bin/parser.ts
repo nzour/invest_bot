@@ -7,7 +7,6 @@ import { FileSystemLocker, withLock } from "../workers/core/locker";
 
 export type ParserImplementation = () => Promise<string>;
 
-const tempDir = (subDir: Company) =>  `/tmp/invest_bot/${subDir}/parser`;
 const logDir = (subDir: Company | string) =>  `/var/log/invest_bot/${subDir}/parser`;
 
 const mainLogger = createLogger(logDir('main'));
@@ -29,6 +28,6 @@ withLock(new FileSystemLocker('parser', '/tmp/invest_bot'), async () => {
       mainLogger.error(String(e));
     }
   }
-});
+}).catch(console.error);
 
 
