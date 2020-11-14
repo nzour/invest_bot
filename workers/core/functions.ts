@@ -41,26 +41,3 @@ export function createConsoleLogger(level = 'debug'): Logger {
     transports: [new t.Console()]
   })
 }
-
-
-export function useWithLockFunction(): {
-  isLocked: () => boolean,
-  withLock: (callable: () => Promise<void>) => Promise<void>
-} {
-  let lock = false;
-
-  const isLocked = () => lock;
-
-  const withLock = async (callable) => {
-    lock = true;
-
-    try {
-      await callable();
-    } finally {
-      lock = false;
-    }
-  };
-
-  return { isLocked, withLock };
-}
-

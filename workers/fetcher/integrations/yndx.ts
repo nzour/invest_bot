@@ -8,7 +8,6 @@ import { Logger } from "winston";
 import { DocumentsStorage } from "../../../common/documents-storage";
 import { FetcherImplementation } from "../../../bin/fetcher";
 import { DocumentFileWithExternalLink, Fetcher } from "../../../common/types";
-import { pipe } from "fp-ts/function";
 
 type PlainDocument = { title: string, url: string };
 
