@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { JSDOM as Jsdom } from 'jsdom';
 import { Logger } from "winston";
-import { DocumentFileWithExternalLink, Fetcher } from "../../../common/types";
+import { DocumentFileWithExternalLink, Fetcher } from "../core/types";
 
 export class YandexFetcher implements Fetcher {
 	constructor(private logger: Logger) {}

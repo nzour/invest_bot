@@ -1,5 +1,5 @@
 import { Logger } from "winston";
-import { ParserImplementation } from "../../../bin/parser";
+import { ParserImplementation } from "../../bin/parser";
 import { PathLike } from "fs";
 import * as fs from "fs/promises";
 

@@ -1,5 +1,5 @@
 import { PathLike } from "fs";
-import { Company } from "../workers/core/company";
+import { Company } from "./company";
 
 export type Uuid = string;
 
