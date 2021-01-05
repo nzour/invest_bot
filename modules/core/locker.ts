@@ -62,3 +62,7 @@ export async function withLock(locker: Locker, func: () => Promise<void>): Promi
 		await locker.releaseLock();
 	}
 }
+
+export const lockers = {
+	usingTempDir: (lockName: string) => new FileSystemLocker(lockName, '/tmp/invest_bot')
+}

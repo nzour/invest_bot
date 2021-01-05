@@ -1,23 +1,21 @@
 #!/usr/bin/env ts-node-script
 
 import { Company, companyUrls } from "../modules/core/company";
-import { createLogger } from "../modules/core/functions";
+import { createLogger, defaultDirs } from "../modules/core/functions";
 import { Fetcher } from "../modules/core/types";
 import { YandexFetcher } from "../modules/fetchers/yndx";
-import { FileSystemLocker, withLock } from "../modules/core/locker";
+import { lockers, withLock } from "../modules/core/locker";
 import { config as setupDotenv } from 'dotenv';
 
 setupDotenv();
 
-const logDir = (subDir: Company | string) => `/var/log/invest_bot/${subDir}/fetcher`;
-
-const mainLogger = createLogger(logDir('main'));
+const mainLogger = createLogger(defaultDirs.logs.fetcher('main'));
 const fetchers = new Map<Company, Fetcher>();
 
-fetchers.set('Yndx', new YandexFetcher(createLogger(logDir('Yndx'))));
+fetchers.set('Yndx', new YandexFetcher(createLogger(defaultDirs.logs.fetcher('Yndx'))));
 
 
-withLock(new FileSystemLocker('fetchers', '/tmp/invest_bot'), async () => {
+withLock(lockers.usingTempDir('fetchers'), async () => {
   for (const [company, fetcher] of fetchers.entries()) {
     try {
       const url = companyUrls[company];

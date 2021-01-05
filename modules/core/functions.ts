@@ -55,3 +55,11 @@ export async function shellExec(cmd: string): Promise<{ stdout: string, stderr: 
 	});
 }
 
+export const defaultDirs = {
+	fetcherFiles: `/tmp/invest_bot/fetcher`,
+	logs: {
+		fetcher: (subDir: string) => `/var/log/invest_bot/${subDir}/fetcher`,
+		parser: (subDir: string) => `/var/log/invest_bot/${subDir}/parser`,
+	}
+}
+
