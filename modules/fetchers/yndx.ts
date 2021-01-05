@@ -12,14 +12,14 @@ export class YandexFetcher implements Fetcher {
 		this.logger.debug(`Got ${status} from ${url} and data length: ${data.length}`);
 
 		const { window: { document } } = new Jsdom(data);
-		const wrappers = document.querySelectorAll('div .nir-widget--news--addl-formats')
+		const wrappers = document.querySelectorAll('.financials-list .financials-list__item')
 
-		this.logger.debug(`Parsed ${wrappers.length} wrappers by 'div .nir-widget--news--addl-formats'`);
+		this.logger.debug(`Parsed ${wrappers.length} wrappers by '.financials-list .financials-list__item'`);
 
 		return [...wrappers.values()]
 			.map(x => ({
-				title: x.children[0].textContent?.trim(),
-				url: x.querySelector('a')?.href?.trim()
+				title: x.querySelector('.financials-list__title').textContent?.trim(),
+				url: (x.querySelector('.docs-list__link') as HTMLAnchorElement).href?.trim()
 			}))
 			.filter(x => !!x.title && !!x.url);
 	}
