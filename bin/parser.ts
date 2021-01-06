@@ -10,6 +10,7 @@ import { createConnection } from "typeorm";
 import { ReportEntity } from "../modules/domain/report.entity";
 import * as fs from "fs/promises";
 import { PathLike } from "fs";
+import { Presets, SingleBar } from "cli-progress";
 
 setupDotenv();
 
@@ -29,13 +30,15 @@ implementationsMap.set('Yndx', yandex.createImplementation({
 withLock(lockers.usingTempDir('parser'), async () => {
 	const connection = await createConnection('default');
 	const reportRepository = await connection.getRepository(ReportEntity);
+	const toProcess = await reportRepository.find({ result: null });
 
-	const toProcess = await reportRepository.find({ result: null })
+	const bar = new SingleBar({} , Presets.shades_classic);
 
-	if (!toProcess.length) {
-		mainLogger.info('There is nothing to process, terminating...');
-	} else {
+	if (toProcess.length) {
 		mainLogger.info(`Processing ${toProcess.length} reports...`);
+		bar.start(toProcess.length, 0);
+	} else {
+		mainLogger.info('There is nothing to process, terminating...');
 	}
 
 	for (const report of toProcess) {
@@ -52,6 +55,8 @@ withLock(lockers.usingTempDir('parser'), async () => {
 			await reportRepository.update(report.id, { result });
 		} catch (e) {
 			mainLogger.error(String(e));
+		} finally {
+			bar.increment();
 		}
 	}
 }).catch(console.error);
