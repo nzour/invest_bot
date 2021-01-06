@@ -11,6 +11,9 @@ export class ReportEntity extends BaseEntity {
 	@Column({ name: 'company', type: 'text', nullable: false })
 	company: Company;
 
+	@Column({ name: 'url', type: 'text', nullable: false })
+	externalUrl: string;
+
 	@Column({ name: 'result', type: 'text', nullable: true })
-	result: string;
+	result: string | null;
 }

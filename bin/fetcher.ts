@@ -46,7 +46,7 @@ withLock(lockers.usingTempDir('fetchers'), async () => {
 					continue;
 				}
 
-				const { id } = await reports.save({ title, company });
+				const { id } = await reports.save({ title, company, externalUrl: String(url) });
 				mainLogger.info(`Saved ${title} (${url})`);
 
 				const tempFilepath = reportDir ? `${reportDir}/temp.pdf` : `${defaultDirs.fetcherFiles}/temp.pdf`;
