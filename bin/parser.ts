@@ -16,7 +16,14 @@ setupDotenv();
 
 const args = minimist(process.argv);
 const logDir = args['log-dir'];
-const documentDir = args['documents-dir'];
+const reportDir = args['report-dir'];
+const enabledProgress = !args['no-progress'];
+const help = args['h'] ?? args['help'];
+
+if (help) {
+	printHelp();
+	process.exit(1);
+}
 
 export type ParserImplementation = (reportContent: string) => Promise<string>;
 
@@ -36,7 +43,7 @@ withLock(lockers.usingTempDir('parser'), async () => {
 
 	if (toProcess.length) {
 		mainLogger.info(`Processing ${toProcess.length} reports...`);
-		bar.start(toProcess.length, 0);
+		enabledProgress && bar.start(toProcess.length, 0);
 	} else {
 		mainLogger.info('There is nothing to process, terminating...');
 	}
@@ -49,14 +56,14 @@ withLock(lockers.usingTempDir('parser'), async () => {
 				throw new Error(`Could not find implementation for '${report.company}'`);
 			}
 
-			const filepath = compileFilepath(report.id, documentDir);
+			const filepath = compileFilepath(report.id, reportDir);
 			const result = await implementation(await readFile(filepath));
 
 			await reportRepository.update(report.id, { result });
 		} catch (e) {
 			mainLogger.error(String(e));
 		} finally {
-			bar.increment();
+			enabledProgress && bar.increment();
 		}
 	}
 }).catch(console.error);
@@ -71,4 +78,15 @@ async function readFile(filepath: PathLike): Promise<string> {
 	const file = await fs.readFile(filepath);
 
 	return file.toString();
+}
+
+function printHelp(): void {
+	console.log(`
+	Looking for non-processed reports then trying to parse and save the result.
+
+	--help	-h	Shows this message.
+	--log-dir	Defines directory for logs.
+	--report-dir	Defines directory for fetched reports.
+	--no-progress	Disables console progress bar.
+	`);
 }

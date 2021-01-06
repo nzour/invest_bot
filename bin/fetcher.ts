@@ -14,7 +14,13 @@ setupDotenv();
 
 const args = minimist(process.argv);
 const logDir = args['log-dir']
-const documentsDir = args['documents-dir'];
+const reportDir = args['report-dir'];
+const help = args['h'] ?? args['help'];
+
+if (help) {
+	printHelp();
+	process.exit(1);
+}
 
 const mainLogger = createLogger(logDir ? `${logDir}/main` : defaultDirs.logs.fetcher('main'));
 const fetchers = new Map<Company, Fetcher>();
@@ -43,15 +49,14 @@ withLock(lockers.usingTempDir('fetchers'), async () => {
 				const { id } = await reports.save({ title, company });
 				mainLogger.info(`Saved ${title} (${url})`);
 
-				const tempFilepath = documentsDir ? `${documentsDir}/temp.pdf` : `${defaultDirs.fetcherFiles}/temp.pdf`;
-				const reportFilepath = documentsDir ? `${documentsDir}/${id}` : `${defaultDirs.fetcherFiles}/${id}`;
+				const tempFilepath = reportDir ? `${reportDir}/temp.pdf` : `${defaultDirs.fetcherFiles}/temp.pdf`;
+				const reportFilepath = reportDir ? `${reportDir}/${id}` : `${defaultDirs.fetcherFiles}/${id}`;
+
+				const download = `curl '${url}' -o ${tempFilepath}`;
+				const convert = `pdftotext -layout ${tempFilepath} ${reportFilepath}`;
 
 				// todo: this should be implemented via js
-				await shellExec(`
-					curl '${url}' -o ${tempFilepath} 
-					&& pdftotext -layout ${tempFilepath} ${reportFilepath} 
-					&& rm ${tempFilepath}`
-				);
+				await shellExec(`${download} && ${convert} && rm ${tempFilepath}`);
 			}
 
 		} catch (e) {
@@ -60,3 +65,13 @@ withLock(lockers.usingTempDir('fetchers'), async () => {
 		}
 	}
 }).catch(console.error);
+
+function printHelp(): void {
+	console.log(`
+	Executes all 'fetcher' implementations and downloads new missing reports.  
+
+	--help	-h	Shows this message.
+	--log-dir	Defines directory for logs.
+	--report-dir	Defines directory for fetched reports.
+	`);
+}
