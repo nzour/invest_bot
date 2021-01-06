@@ -23,7 +23,7 @@ const mainLogger = createLogger(logDir ? `${logDir}/main` : defaultDirs.logs.par
 const implementationsMap = new Map<Company, ParserImplementation>();
 
 implementationsMap.set('Yndx', yandex.createImplementation({
-	logger: createLogger(logDir ? `${logDir}/main` : defaultDirs.logs.parser('Yndx'))
+	logger: createLogger(logDir ? `${logDir}/Yndx` : defaultDirs.logs.parser('Yndx'))
 }));
 
 withLock(lockers.usingTempDir('parser'), async () => {

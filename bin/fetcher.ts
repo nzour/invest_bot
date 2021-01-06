@@ -19,7 +19,7 @@ const documentsDir = args['documents-dir'];
 const mainLogger = createLogger(logDir ? `${logDir}/main` : defaultDirs.logs.fetcher('main'));
 const fetchers = new Map<Company, Fetcher>();
 
-fetchers.set('Yndx', new YandexFetcher(createLogger(logDir ? `${logDir}/main` : defaultDirs.logs.fetcher('Yndx'))));
+fetchers.set('Yndx', new YandexFetcher(createLogger(logDir ? `${logDir}/Yndx` : defaultDirs.logs.fetcher('Yndx'))));
 
 
 withLock(lockers.usingTempDir('fetchers'), async () => {
