@@ -1,21 +1,15 @@
 import { Logger } from "winston";
 import { ParserImplementation } from "../../bin/parser";
-import { PathLike } from "fs";
-import * as fs from "fs/promises";
 
 type Options = {
-  logger: Logger,
-  documentsDirectory: PathLike
+  logger: Logger
 };
 
-export function createImplementation({ logger, documentsDirectory }: Options): ParserImplementation {
-  return async () => {
-    const files = await fs.readdir(documentsDirectory);
+export function createImplementation({ logger }: Options): ParserImplementation {
+  return async (content: string) => {
 
-    const textFiles = files.filter(f => f.endsWith('.txt'));
+    // parsing logic
 
-
-
-    return '';
+    return content;
   };
 }
